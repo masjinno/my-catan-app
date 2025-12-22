@@ -1,0 +1,83 @@
+<Window x:Class="CatanGame.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CatanGame.App.Views"
+        xmlns:vm="clr-namespace:CatanGame.App.ViewModels"
+        xmlns:converters="clr-namespace:CatanGame.App.Converters"
+        mc:Ignorable="d"
+        Title="Catan Game" Height="800" Width="1200">
+    <Window.Resources>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+    </Window.Resources>
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="250"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#87CEEB" Padding="10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding HexTiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas Width="800" Height="700" Background="Transparent"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="Canvas.Left" Value="{Binding Center.X}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding Center.Y}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:HexagonControl DataContext="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Column="1" Background="#F0F0F0" BorderBrush="#CCCCCC" BorderThickness="1,0,0,0">
+            <StackPanel Margin="10">
+                <TextBlock Text="Catan Game" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                <Button Content="New Game"
+                        Command="{Binding NewGameCommand}"
+                        Padding="10,5"
+                        Margin="0,0,0,10"
+                        FontSize="14"/>
+
+                <Separator Margin="0,10"/>
+
+                <TextBlock Text="Current Player:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="{Binding CurrentPlayerName}" FontSize="16" Margin="0,0,0,10"/>
+
+                <Separator Margin="0,10"/>
+
+                <Button Content="Roll Dice"
+                        Command="{Binding RollDiceCommand}"
+                        Padding="10,5"
+                        Margin="0,0,0,10"
+                        FontSize="14"/>
+
+                <TextBlock Text="Dice Roll:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="{Binding DiceRoll}" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                <Separator Margin="0,10"/>
+
+                <TextBlock Text="Game Controls" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
+                <TextBlock Text="Phase 1: Board Display" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                <TextBlock Text="• Hexagonal tiles with resources" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="• Number tokens" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="• Basic player turns" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
