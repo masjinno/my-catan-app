@@ -13,6 +13,13 @@ public class HexTileViewModel : ViewModelBase
 
     public string DisplayNumber => _tile.NumberToken?.ToString() ?? "";
 
+    public string NumberColor => _tile.NumberToken switch
+    {
+        6 => "#FF0000",
+        8 => "#FF0000",
+        _ => "#000000"
+    };
+
     public string ResourceColor => _tile.ResourceType switch
     {
         ResourceType.Wood => "#228B22",

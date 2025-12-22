@@ -30,6 +30,7 @@
                        Text="{Binding DisplayNumber}"
                        FontSize="18"
                        FontWeight="Bold"
+                       Foreground="{Binding NumberColor}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"/>
         </Canvas>
