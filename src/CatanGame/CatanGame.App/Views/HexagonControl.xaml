@@ -4,10 +4,11 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             Width="120" Height="104">
+             Width="120" Height="120">
     <Grid>
         <Canvas>
-            <Polygon Points="60,0 105,26 105,78 60,104 15,78 15,26"
+            <!-- Flat-top hexagon: 上下に辺がある六角形 -->
+            <Polygon Points="30,0 90,0 120,52 90,104 30,104 0,52"
                      Stroke="Black"
                      StrokeThickness="2">
                 <Polygon.Fill>
@@ -15,7 +16,7 @@
                 </Polygon.Fill>
             </Polygon>
 
-            <Ellipse Canvas.Left="40" Canvas.Top="37"
+            <Ellipse Canvas.Left="40" Canvas.Top="42"
                      Width="40" Height="40"
                      Fill="White"
                      Stroke="Black"

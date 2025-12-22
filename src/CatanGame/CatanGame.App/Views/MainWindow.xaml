@@ -7,7 +7,7 @@
         xmlns:vm="clr-namespace:CatanGame.App.ViewModels"
         xmlns:converters="clr-namespace:CatanGame.App.Converters"
         mc:Ignorable="d"
-        Title="Catan Game" Height="800" Width="1200">
+        Title="カタン" Height="800" Width="1200">
     <Window.Resources>
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
     </Window.Resources>
@@ -46,9 +46,9 @@
 
         <Border Grid.Column="1" Background="#F0F0F0" BorderBrush="#CCCCCC" BorderThickness="1,0,0,0">
             <StackPanel Margin="10">
-                <TextBlock Text="Catan Game" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+                <TextBlock Text="カタン" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
 
-                <Button Content="New Game"
+                <Button Content="新規ゲーム"
                         Command="{Binding NewGameCommand}"
                         Padding="10,5"
                         Margin="0,0,0,10"
@@ -56,27 +56,27 @@
 
                 <Separator Margin="0,10"/>
 
-                <TextBlock Text="Current Player:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="現在のプレイヤー:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
                 <TextBlock Text="{Binding CurrentPlayerName}" FontSize="16" Margin="0,0,0,10"/>
 
                 <Separator Margin="0,10"/>
 
-                <Button Content="Roll Dice"
+                <Button Content="サイコロを振る"
                         Command="{Binding RollDiceCommand}"
                         Padding="10,5"
                         Margin="0,0,0,10"
                         FontSize="14"/>
 
-                <TextBlock Text="Dice Roll:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="サイコロの目:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
                 <TextBlock Text="{Binding DiceRoll}" FontSize="32" HorizontalAlignment="Center" Margin="0,0,0,10"/>
 
                 <Separator Margin="0,10"/>
 
-                <TextBlock Text="Game Controls" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
-                <TextBlock Text="Phase 1: Board Display" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                <TextBlock Text="• Hexagonal tiles with resources" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
-                <TextBlock Text="• Number tokens" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
-                <TextBlock Text="• Basic player turns" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="ゲーム操作" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
+                <TextBlock Text="フェーズ1: ボード表示" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                <TextBlock Text="• 資源タイルの六角形表示" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="• 数字トークン" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="• 基本的なターン管理" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
             </StackPanel>
         </Border>
     </Grid>

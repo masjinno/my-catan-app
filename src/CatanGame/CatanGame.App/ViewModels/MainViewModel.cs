@@ -45,10 +45,10 @@ public class MainViewModel : ViewModelBase
     {
         _gameState = new GameState();
 
-        _gameState.Players.Add(new Player("Player 1", PlayerColor.Red));
-        _gameState.Players.Add(new Player("Player 2", PlayerColor.Blue));
-        _gameState.Players.Add(new Player("Player 3", PlayerColor.White));
-        _gameState.Players.Add(new Player("Player 4", PlayerColor.Orange));
+        _gameState.Players.Add(new Player("プレイヤー1", PlayerColor.Red));
+        _gameState.Players.Add(new Player("プレイヤー2", PlayerColor.Blue));
+        _gameState.Players.Add(new Player("プレイヤー3", PlayerColor.White));
+        _gameState.Players.Add(new Player("プレイヤー4", PlayerColor.Orange));
 
         _gameState.Phase = GamePhase.Playing;
 
@@ -71,7 +71,7 @@ public class MainViewModel : ViewModelBase
         var winner = _gameState.CheckWinner();
         if (winner != null)
         {
-            CurrentPlayerName = $"{winner.Name} Wins!";
+            CurrentPlayerName = $"{winner.Name} の勝利！";
             _gameState.Phase = GamePhase.Ended;
         }
     }

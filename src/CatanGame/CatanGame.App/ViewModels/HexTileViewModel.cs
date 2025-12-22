@@ -32,8 +32,9 @@ public class HexTileViewModel : ViewModelBase
 
     private Point CalculateHexCenter(int q, int r, double size)
     {
-        double x = size * (3.0 / 2.0 * q);
-        double y = size * (Math.Sqrt(3) / 2.0 * q + Math.Sqrt(3) * r);
+        // Flat-top orientation (辺が接する配置)
+        double x = size * (Math.Sqrt(3) * q + Math.Sqrt(3) / 2.0 * r);
+        double y = size * (3.0 / 2.0 * r);
         return new Point(x, y);
     }
 }
