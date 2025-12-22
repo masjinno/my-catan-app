@@ -31,6 +31,8 @@ public class HexTileViewModel : ViewModelBase
         _ => "#FFFFFF"
     };
 
+    public bool HasRobber => _tile.HasRobber;
+
     public HexTileViewModel(HexTile tile, double hexSize)
     {
         _tile = tile;

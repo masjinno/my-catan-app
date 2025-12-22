@@ -36,6 +36,14 @@
                        TextAlignment="Center"
                        VerticalAlignment="Center"
                        HorizontalAlignment="Center"/>
+
+            <!-- 盗賊 -->
+            <Ellipse Canvas.Left="50" Canvas.Top="70"
+                     Width="20" Height="20"
+                     Fill="Black"
+                     Stroke="White"
+                     StrokeThickness="2"
+                     Visibility="{Binding HasRobber, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Canvas>
     </Grid>
 </UserControl>
