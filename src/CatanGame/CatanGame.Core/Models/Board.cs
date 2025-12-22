@@ -16,27 +16,31 @@ public class Board
 
     private void InitializeBoard()
     {
+        // 螺旋状の配置順序（外側の角から中心に向かって時計回り）
         var layout = new[]
         {
-            new { Q = 0, R = -2 },
-            new { Q = 1, R = -2 },
-            new { Q = 2, R = -2 },
-            new { Q = -1, R = -1 },
-            new { Q = 0, R = -1 },
-            new { Q = 1, R = -1 },
-            new { Q = 2, R = -1 },
-            new { Q = -2, R = 0 },
-            new { Q = -1, R = 0 },
-            new { Q = 0, R = 0 },
-            new { Q = 1, R = 0 },
-            new { Q = 2, R = 0 },
-            new { Q = -2, R = 1 },
-            new { Q = -1, R = 1 },
-            new { Q = 0, R = 1 },
-            new { Q = 1, R = 1 },
-            new { Q = -2, R = 2 },
-            new { Q = -1, R = 2 },
-            new { Q = 0, R = 2 }
+            // 外周（角から時計回り）
+            new { Q = 0, R = -2 },   // 0: 上の角
+            new { Q = 1, R = -2 },   // 1
+            new { Q = 2, R = -2 },   // 2: 右上の角
+            new { Q = 2, R = -1 },   // 3
+            new { Q = 2, R = 0 },    // 4: 右の角
+            new { Q = 1, R = 1 },    // 5
+            new { Q = 0, R = 2 },    // 6: 右下の角
+            new { Q = -1, R = 2 },   // 7
+            new { Q = -2, R = 2 },   // 8: 下の角
+            new { Q = -2, R = 1 },   // 9
+            new { Q = -2, R = 0 },   // 10: 左下の角
+            new { Q = -1, R = -1 },  // 11
+            // 内側のリング
+            new { Q = 0, R = -1 },   // 12
+            new { Q = 1, R = -1 },   // 13
+            new { Q = 1, R = 0 },    // 14
+            new { Q = 0, R = 1 },    // 15
+            new { Q = -1, R = 1 },   // 16
+            new { Q = -1, R = 0 },   // 17
+            // 中央
+            new { Q = 0, R = 0 }     // 18
         };
 
         var resources = new List<ResourceType>
@@ -49,20 +53,27 @@ public class Board
             ResourceType.Desert
         };
 
-        var numbers = new List<int?>
-        {
-            2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12, null
-        };
+        // 数字チップの配置順序（砂漠はスキップ）
+        var numberSequence = new List<int> { 5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11 };
 
         var random = new Random();
         resources = resources.OrderBy(x => random.Next()).ToList();
-        numbers = numbers.OrderBy(x => random.Next()).ToList();
+
+        // 数字チップのインデックス
+        int numberIndex = 0;
 
         for (int i = 0; i < layout.Length; i++)
         {
             var pos = layout[i];
             var resource = resources[i];
-            var number = resource == ResourceType.Desert ? null : numbers[i];
+            int? number = null;
+
+            // 砂漠でない場合のみ数字チップを配置
+            if (resource != ResourceType.Desert)
+            {
+                number = numberSequence[numberIndex];
+                numberIndex++;
+            }
 
             Tiles.Add(new HexTile(pos.Q, pos.R, resource, number));
         }
