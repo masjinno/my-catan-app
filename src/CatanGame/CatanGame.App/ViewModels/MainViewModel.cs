@@ -8,7 +8,7 @@ namespace CatanGame.App.ViewModels;
 public class MainViewModel : ViewModelBase
 {
     private GameState _gameState;
-    private const double HexSize = 60;
+    private const double HexSize = 52;
 
     public ObservableCollection<HexTileViewModel> HexTiles { get; }
 

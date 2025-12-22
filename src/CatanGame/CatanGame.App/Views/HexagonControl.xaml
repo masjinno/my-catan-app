@@ -4,35 +4,34 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             Width="120" Height="120">
+             Width="120" Height="104">
     <Grid>
         <Canvas>
-            <!-- Flat-top hexagon: 上下に辺がある六角形 -->
-            <Polygon Points="30,0 90,0 120,52 90,104 30,104 0,52"
+            <!-- Flat-top hexagon: 上下に辺がある六角形（30度回転） -->
+            <Polygon Points="60,0 105,26 105,78 60,104 15,78 15,26"
                      Stroke="Black"
                      StrokeThickness="2">
                 <Polygon.Fill>
                     <SolidColorBrush Color="{Binding ResourceColor}"/>
                 </Polygon.Fill>
+                <Polygon.RenderTransform>
+                    <RotateTransform Angle="30" CenterX="60" CenterY="52"/>
+                </Polygon.RenderTransform>
             </Polygon>
 
-            <Ellipse Canvas.Left="40" Canvas.Top="42"
+            <Ellipse Canvas.Left="40" Canvas.Top="32"
                      Width="40" Height="40"
                      Fill="White"
                      Stroke="Black"
                      StrokeThickness="1"
                      Visibility="{Binding DisplayNumber, Converter={StaticResource StringToVisibilityConverter}}"/>
 
-            <TextBlock Canvas.Left="60" Canvas.Top="52"
+            <TextBlock Canvas.Left="50" Canvas.Top="42"
                        Text="{Binding DisplayNumber}"
                        FontSize="18"
                        FontWeight="Bold"
                        HorizontalAlignment="Center"
-                       VerticalAlignment="Center">
-                <TextBlock.RenderTransform>
-                    <TranslateTransform X="-10" Y="0"/>
-                </TextBlock.RenderTransform>
-            </TextBlock>
+                       VerticalAlignment="Center"/>
         </Canvas>
     </Grid>
 </UserControl>

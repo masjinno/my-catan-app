@@ -32,9 +32,18 @@ public class HexTileViewModel : ViewModelBase
 
     private Point CalculateHexCenter(int q, int r, double size)
     {
-        // Flat-top orientation (辺が接する配置)
-        double x = size * (Math.Sqrt(3) * q + Math.Sqrt(3) / 2.0 * r);
-        double y = size * (3.0 / 2.0 * r);
-        return new Point(x, y);
+        // Pointy-top orientation の配置計算
+        // タイル自体は30度回転させているが、配置計算はpointy-topのまま
+        // 水平方向の幅 = size * 1.5
+        // 垂直方向の高さ = size * √3
+
+        double x = size * 1.5 * q;
+        double y = size * Math.Sqrt(3) * (r + q / 2.0);
+
+        // ボードの中心をCanvasの中央に配置するためのオフセット
+        double offsetX = 400; // Canvasの幅800の半分
+        double offsetY = 350; // Canvasの高さ700の半分
+
+        return new Point(x + offsetX, y + offsetY);
     }
 }
