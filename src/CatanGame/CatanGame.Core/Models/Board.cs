@@ -212,46 +212,130 @@ public class Board
         // 港の配置（外周タイルの外側を向いた辺に配置）
         // 3:1港 x 4セット、2:1港 x 5セット（木、土、羊、麦、鉄）
 
-        var portPlacements = new[]
+        // 港の位置（座標と方向）を固定で定義
+        var portLocations = new[]
         {
-            // 各港は (Q座標, R座標, 辺の方向, 港の種類) で定義される
+            // 各港は (Q座標, R座標, 辺の方向) で定義される
             // 辺の方向: 0=右下、1=下、2=左下、3=左上、4=上、5=右上
             //
             // 配置パターン：角の港 → 3辺スキップ → 港 → 4辺スキップ → 港 → 3辺スキップ → 次の角の港
             // このパターンで島を一周して合計9つの港を配置
 
-            // 港1：上の角タイル (0,-2) の上の辺
-            new { Q = 0, R = -2, Dir = 4, Type = PortType.Generic },
-
-            // 港2：右上辺タイル (1,-2) の右上の辺
-            new { Q = 1, R = -2, Dir = 5, Type = PortType.Wood },
-
-            // 港3：右辺のタイル (2,-1) の右上の辺
-            new { Q = 2, R = -1, Dir = 5, Type = PortType.Generic },
-
-            // 港4：右下角タイル (2,0) の右下の辺
-            new { Q = 2, R = 0, Dir = 0, Type = PortType.Sheep },
-
-            // 港5：右下辺タイル (1,1) の下の辺
-            new { Q = 1, R = 1, Dir = 1, Type = PortType.Generic },
-
-            // 港6：左下辺タイル (-1,2) の下の辺
-            new { Q = -1, R = 2, Dir = 1, Type = PortType.Wheat },
-
-            // 港7：左下角タイル (-2,2) の左下の辺
-            new { Q = -2, R = 2, Dir = 2, Type = PortType.Brick },
-
-            // 港8：左辺のタイル（-2,1) の左上の辺
-            new { Q = -2, R = 1, Dir = 3, Type = PortType.Generic },
-
-            // 港9：左上辺タイル (-1,-1) の左上の辺
-            new { Q = -1, R = -1, Dir = 3, Type = PortType.Ore }
+            new { Q = 0, R = -2, Dir = 4 },   // 港1：上の角タイル (0,-2) の上の辺
+            new { Q = 1, R = -2, Dir = 5 },   // 港2：右上辺タイル (1,-2) の右上の辺
+            new { Q = 2, R = -1, Dir = 5 },   // 港3：右辺のタイル (2,-1) の右上の辺
+            new { Q = 2, R = 0, Dir = 0 },    // 港4：右下角タイル (2,0) の右下の辺
+            new { Q = 1, R = 1, Dir = 1 },    // 港5：右下辺タイル (1,1) の下の辺
+            new { Q = -1, R = 2, Dir = 1 },   // 港6：左下辺タイル (-1,2) の下の辺
+            new { Q = -2, R = 2, Dir = 2 },   // 港7：左下角タイル (-2,2) の左下の辺
+            new { Q = -2, R = 1, Dir = 3 },   // 港8：左辺のタイル（-2,1) の左上の辺
+            new { Q = -1, R = -1, Dir = 3 }   // 港9：左上辺タイル (-1,-1) の左上の辺
         };
 
-        // 港リストに追加
-        foreach (var placement in portPlacements)
+        // 港の種類をランダムにシャッフル
+        // 一般港（3:1）x 4つ、専門港（2:1）x 5つ（木、土、羊、麦、鉄）
+        // 制約：一般港は連続して2つまで（3つ以上連続しない）
+        var portTypes = new List<PortType>
         {
-            Ports.Add(new Port(placement.Q, placement.R, placement.Dir, placement.Type));
+            PortType.Generic, PortType.Generic, PortType.Generic, PortType.Generic,
+            PortType.Wood, PortType.Brick, PortType.Sheep, PortType.Wheat, PortType.Ore
+        };
+
+        var random = new Random();
+        List<PortType> shuffledPortTypes;
+
+        // 一般港が3つ以上連続しない配置を見つけるまでシャッフルを繰り返す
+        int maxAttempts = 1000;
+        int attempts = 0;
+        do
+        {
+            shuffledPortTypes = portTypes.OrderBy(_ => random.Next()).ToList();
+            attempts++;
+
+            if (attempts >= maxAttempts)
+            {
+                // 万が一見つからない場合は、強制的に調整
+                shuffledPortTypes = AdjustPortTypes(portTypes, random);
+                break;
+            }
         }
+        while (HasThreeConsecutiveGenericPorts(shuffledPortTypes));
+
+        // 港リストに追加（位置は固定、種類はランダム）
+        for (int i = 0; i < portLocations.Length; i++)
+        {
+            var location = portLocations[i];
+            Ports.Add(new Port(location.Q, location.R, location.Dir, shuffledPortTypes[i]));
+        }
+    }
+
+    /// <summary>
+    /// 一般港が3つ以上連続しているかチェック
+    /// 港は環状に配置されているため、最後と最初も繋がっていることを考慮
+    /// </summary>
+    private bool HasThreeConsecutiveGenericPorts(List<PortType> portTypes)
+    {
+        int count = portTypes.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            // 現在の港とその次の2つの港をチェック（環状配置を考慮）
+            if (portTypes[i] == PortType.Generic &&
+                portTypes[(i + 1) % count] == PortType.Generic &&
+                portTypes[(i + 2) % count] == PortType.Generic)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 一般港が3つ以上連続しないように強制的に調整
+    /// </summary>
+    private List<PortType> AdjustPortTypes(List<PortType> portTypes, Random random)
+    {
+        var result = portTypes.OrderBy(_ => random.Next()).ToList();
+        int count = result.Count;
+
+        // 最大100回の調整試行
+        for (int attempt = 0; attempt < 100; attempt++)
+        {
+            bool adjusted = false;
+
+            for (int i = 0; i < count; i++)
+            {
+                // 一般港が3つ連続している箇所を見つける
+                if (result[i] == PortType.Generic &&
+                    result[(i + 1) % count] == PortType.Generic &&
+                    result[(i + 2) % count] == PortType.Generic)
+                {
+                    // 3つ目の一般港と、専門港を交換
+                    int swapIndex = (i + 2) % count;
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (result[j] != PortType.Generic)
+                        {
+                            // 交換
+                            var temp = result[swapIndex];
+                            result[swapIndex] = result[j];
+                            result[j] = temp;
+                            adjusted = true;
+                            break;
+                        }
+                    }
+
+                    if (adjusted)
+                        break;
+                }
+            }
+
+            // 調整が不要になったらループを抜ける
+            if (!adjusted || !HasThreeConsecutiveGenericPorts(result))
+                break;
+        }
+
+        return result;
     }
 }

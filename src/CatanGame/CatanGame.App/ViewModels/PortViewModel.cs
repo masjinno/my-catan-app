@@ -45,15 +45,24 @@ public class PortViewModel : ViewModelBase
 
     /// <summary>
     /// 港ラベルの回転角度（辺に平行になるように）
+    /// 上側の辺（Direction 3, 4, 5）は180度回転させて読みやすくする
     /// </summary>
     public double Rotation
     {
         get
         {
             // 辺の方向に応じて回転角度を計算
-            // Direction 0-5: 0=右上、1=右、2=右下、3=左下、4=左、5=左上
+            // Direction 0-5: 0=右下、1=下、2=左下、3=左上、4=上、5=右上
             // 辺の法線方向から90度引いて辺に平行にする
-            return _port.Direction * 60 + 30 - 90;
+            double baseRotation = _port.Direction * 60 + 30 - 90;
+
+            // 上側の辺（左上、上、右上）は180度回転させて文字を読みやすくする
+            if (_port.Direction == 3 || _port.Direction == 4 || _port.Direction == 5)
+            {
+                baseRotation += 180;
+            }
+
+            return baseRotation;
         }
     }
 
