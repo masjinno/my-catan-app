@@ -20,6 +20,21 @@ public class HexTileViewModel : ViewModelBase
         _ => "#000000"
     };
 
+    public int NumberFontSize => _tile.NumberToken switch
+    {
+        6 or 8 or 5 or 9 => 20,
+        4 or 10 => 19,
+        3 or 11 => 18,
+        2 or 12 => 17,
+        _ => 18
+    };
+
+    public string NumberFontWeight => _tile.NumberToken switch
+    {
+        6 or 8 => "Bold",
+        _ => "Normal"
+    };
+
     public string ResourceColor => _tile.ResourceType switch
     {
         ResourceType.Wood => "#228B22",
