@@ -32,12 +32,12 @@ public class PortViewModel : ViewModelBase
         {
             return _port.PortType switch
             {
-                PortType.Generic => "3:1",
-                PortType.Wood => "木2:1",
-                PortType.Brick => "土2:1",
-                PortType.Sheep => "羊2:1",
-                PortType.Wheat => "麦2:1",
-                PortType.Ore => "鉄2:1",
+                PortType.Generic => "3：1",
+                PortType.Wood => "木2：1",
+                PortType.Brick => "土2：1",
+                PortType.Sheep => "羊2：1",
+                PortType.Wheat => "麦2：1",
+                PortType.Ore => "鉄2：1",
                 _ => ""
             };
         }
@@ -67,11 +67,11 @@ public class PortViewModel : ViewModelBase
         {
             return _port.PortType switch
             {
-                PortType.Generic => new SolidColorBrush(Color.FromRgb(200, 200, 200)), // 灰色
+                PortType.Generic => new SolidColorBrush(Color.FromRgb(180, 180, 180)), // 灰色（少し濃く）
                 PortType.Wood => new SolidColorBrush(Color.FromRgb(34, 139, 34)),      // 深緑
                 PortType.Brick => new SolidColorBrush(Color.FromRgb(178, 34, 34)),     // 深紅
-                PortType.Sheep => new SolidColorBrush(Color.FromRgb(144, 238, 144)),   // 明緑
-                PortType.Wheat => new SolidColorBrush(Color.FromRgb(255, 215, 0)),     // 金色
+                PortType.Sheep => new SolidColorBrush(Color.FromRgb(120, 200, 120)),   // 明緑（少し濃く）
+                PortType.Wheat => new SolidColorBrush(Color.FromRgb(225, 180, 50)),    // ゴールデンロッド（少し明るく）
                 PortType.Ore => new SolidColorBrush(Color.FromRgb(105, 105, 105)),     // 濃灰色
                 _ => Brushes.White
             };
@@ -124,9 +124,9 @@ public class PortViewModel : ViewModelBase
         double canvasCenterX = 400; // Canvasの幅の半分
         double canvasCenterY = 350; // Canvasの高さの半分
 
-        // 6. ラベルの左上座標を計算（ラベルのサイズは60x20）
-        double labelWidth = 60.0;
-        double labelHeight = 20.0;
+        // 6. ラベルの左上座標を計算（ラベルのサイズは50x24）
+        double labelWidth = 50.0;
+        double labelHeight = 24.0;
         double finalX = portX + canvasCenterX - labelWidth / 2.0;
         double finalY = portY + canvasCenterY - labelHeight / 2.0;
 

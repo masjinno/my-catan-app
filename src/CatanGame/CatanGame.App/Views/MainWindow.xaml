@@ -59,7 +59,7 @@
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Width="60" Height="20"
+                                <Border Width="50" Height="24"
                                         Background="{Binding BackgroundColor}"
                                         BorderBrush="Black"
                                         BorderThickness="2"
@@ -69,7 +69,7 @@
                                         <RotateTransform Angle="{Binding Rotation}"/>
                                     </Border.RenderTransform>
                                     <TextBlock Text="{Binding DisplayText}"
-                                               FontSize="10"
+                                               FontSize="13"
                                                FontWeight="Bold"
                                                Foreground="White"
                                                TextAlignment="Center"
