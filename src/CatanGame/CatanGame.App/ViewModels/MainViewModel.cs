@@ -11,6 +11,7 @@ public class MainViewModel : ViewModelBase
     private const double HexSize = 52;
 
     public ObservableCollection<HexTileViewModel> HexTiles { get; }
+    public ObservableCollection<PortViewModel> Ports { get; }
 
     public ICommand NewGameCommand { get; }
     public ICommand RollDiceCommand { get; }
@@ -34,6 +35,7 @@ public class MainViewModel : ViewModelBase
         _gameState = new GameState();
         _currentPlayerName = "";
         HexTiles = new ObservableCollection<HexTileViewModel>();
+        Ports = new ObservableCollection<PortViewModel>();
 
         NewGameCommand = new RelayCommand(_ => StartNewGame());
         RollDiceCommand = new RelayCommand(_ => RollDice(), _ => CanRollDice());
@@ -56,6 +58,12 @@ public class MainViewModel : ViewModelBase
         foreach (var tile in _gameState.Board.Tiles)
         {
             HexTiles.Add(new HexTileViewModel(tile, HexSize));
+        }
+
+        Ports.Clear();
+        foreach (var port in _gameState.Board.Ports)
+        {
+            Ports.Add(new PortViewModel(port));
         }
 
         UpdateCurrentPlayer();

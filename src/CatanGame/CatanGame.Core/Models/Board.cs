@@ -5,13 +5,16 @@ public class Board
     public List<HexTile> Tiles { get; set; }
     public Dictionary<VertexPosition, Settlement> Settlements { get; set; }
     public Dictionary<EdgePosition, Road> Roads { get; set; }
+    public List<Port> Ports { get; set; }
 
     public Board()
     {
         Tiles = new List<HexTile>();
         Settlements = new Dictionary<VertexPosition, Settlement>();
         Roads = new Dictionary<EdgePosition, Road>();
+        Ports = new List<Port>();
         InitializeBoard();
+        InitializePorts();
     }
 
     private void InitializeBoard()
@@ -189,5 +192,66 @@ public class Board
     private bool IsVertexAdjacentToTile(VertexPosition vertex, HexTile tile)
     {
         return vertex.Q == tile.Q && vertex.R == tile.R;
+    }
+
+    /// <summary>
+    /// ボード上の港を初期化する
+    /// 港は外周タイルの海に面した辺に配置される
+    ///
+    /// 港の配置ルール：
+    /// - 合計9つの港（一般港3:1が4つ、専門港2:1が5つ）
+    /// - 海沿いの頂点は30個（外周タイルの外側の頂点）
+    /// - 港は海沿いの隣り合う2頂点（=1つの辺）で1セット
+    /// - 9港 × 2頂点/港 = 18頂点が港に使用される
+    /// - 残り12頂点は港でない頂点
+    /// - 港でない頂点は連続して2つまで（3つ連続は不可）
+    /// - 異なる港同士は頂点を共有しない（隣接しない）
+    /// </summary>
+    private void InitializePorts()
+    {
+        // 港の配置（外周タイルの外側を向いた辺に配置）
+        // 3:1港 x 4セット、2:1港 x 5セット（木、土、羊、麦、鉄）
+
+        var portPlacements = new[]
+        {
+            // 各港は (Q座標, R座標, 辺の方向, 港の種類) で定義される
+            // 辺の方向: 0=右下、1=下、2=左下、3=左上、4=上、5=右上
+            //
+            // 配置パターン：角の港 → 3辺スキップ → 港 → 4辺スキップ → 港 → 3辺スキップ → 次の角の港
+            // このパターンで島を一周して合計9つの港を配置
+
+            // 港1：上の角タイル (0,-2) の上の辺
+            new { Q = 0, R = -2, Dir = 4, Type = PortType.Generic },
+
+            // 港2：右上辺タイル (1,-2) の右上の辺
+            new { Q = 1, R = -2, Dir = 5, Type = PortType.Wood },
+
+            // 港3：右辺のタイル (2,-1) の右上の辺
+            new { Q = 2, R = -1, Dir = 5, Type = PortType.Generic },
+
+            // 港4：右下角タイル (2,0) の右下の辺
+            new { Q = 2, R = 0, Dir = 0, Type = PortType.Sheep },
+
+            // 港5：右下辺タイル (1,1) の下の辺
+            new { Q = 1, R = 1, Dir = 1, Type = PortType.Generic },
+
+            // 港6：左下辺タイル (-1,2) の下の辺
+            new { Q = -1, R = 2, Dir = 1, Type = PortType.Wheat },
+
+            // 港7：左下角タイル (-2,2) の左下の辺
+            new { Q = -2, R = 2, Dir = 2, Type = PortType.Brick },
+
+            // 港8：左辺のタイル（-2,1) の左上の辺
+            new { Q = -2, R = 1, Dir = 3, Type = PortType.Generic },
+
+            // 港9：左上辺タイル (-1,-1) の左上の辺
+            new { Q = -1, R = -1, Dir = 3, Type = PortType.Ore }
+        };
+
+        // 港リストに追加
+        foreach (var placement in portPlacements)
+        {
+            Ports.Add(new Port(placement.Q, placement.R, placement.Dir, placement.Type));
+        }
     }
 }
