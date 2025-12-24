@@ -20,7 +20,7 @@ public class Board
     private void InitializeBoard()
     {
         // 螺旋状の配置順序（外側の角から中心に向かって時計回り）
-        var layout = new[]
+        var baseLayout = new[]
         {
             // 外周（角から時計回り）
             new { Q = 0, R = -2 },   // 0: 上の角
@@ -46,6 +46,32 @@ public class Board
             new { Q = 0, R = 0 }     // 18
         };
 
+        var random = new Random();
+
+        // 6つの角のいずれかをランダムに選択してスタート位置とする
+        // 角の位置: 0=上, 2=右上, 4=右, 6=右下, 8=下, 10=左下
+        int[] cornerIndices = { 0, 2, 4, 6, 8, 10 };
+        int startCornerIndex = cornerIndices[random.Next(cornerIndices.Length)];
+
+        // レイアウトを回転させる（スタート位置を先頭にする）
+        var layout = new List<dynamic>();
+
+        // 外周のタイル（0-11）を回転
+        for (int i = 0; i < 12; i++)
+        {
+            layout.Add(baseLayout[(startCornerIndex + i) % 12]);
+        }
+
+        // 内側のリング（12-17）を回転（外周と同じ回転量）
+        int innerRotation = startCornerIndex / 2; // 角のインデックスを内側リングの回転量に変換
+        for (int i = 0; i < 6; i++)
+        {
+            layout.Add(baseLayout[12 + (innerRotation + i) % 6]);
+        }
+
+        // 中央（18）はそのまま
+        layout.Add(baseLayout[18]);
+
         var resources = new List<ResourceType>
         {
             ResourceType.Wood, ResourceType.Wood, ResourceType.Wood, ResourceType.Wood,
@@ -59,13 +85,12 @@ public class Board
         // 数字チップの配置順序（砂漠はスキップ）
         var numberSequence = new List<int> { 5, 2, 6, 3, 8, 10, 9, 12, 11, 4, 8, 10, 9, 4, 5, 6, 3, 11 };
 
-        var random = new Random();
         resources = resources.OrderBy(x => random.Next()).ToList();
 
         // 数字チップのインデックス
         int numberIndex = 0;
 
-        for (int i = 0; i < layout.Length; i++)
+        for (int i = 0; i < layout.Count; i++)
         {
             var pos = layout[i];
             var resource = resources[i];

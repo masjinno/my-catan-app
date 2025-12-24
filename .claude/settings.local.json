@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add CONVERSATION_LOG.md)",
+      "Bash(git commit -m \"$(cat <<''EOF''\n対話ログを更新\n\n港の実装に関する対話を記録\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+    ]
+  }
+}
