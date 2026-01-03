@@ -79,6 +79,181 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+
+                    <!-- 道路の描画 -->
+                    <ItemsControl ItemsSource="{Binding Edges}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Line X1="{Binding StartPoint.X}" Y1="{Binding StartPoint.Y}"
+                                      X2="{Binding EndPoint.X}" Y2="{Binding EndPoint.Y}"
+                                      Stroke="{Binding RoadColor}"
+                                      StrokeThickness="5"
+                                      Cursor="Hand">
+                                    <Line.Style>
+                                        <Style TargetType="Line">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasRoad}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Line.Style>
+                                </Line>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- クリック可能な辺（道路配置用） -->
+                    <ItemsControl ItemsSource="{Binding Edges}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Line X1="{Binding StartPoint.X}" Y1="{Binding StartPoint.Y}"
+                                      X2="{Binding EndPoint.X}" Y2="{Binding EndPoint.Y}"
+                                      Stroke="#80FF00FF"
+                                      StrokeThickness="6"
+                                      Cursor="Hand">
+                                    <Line.InputBindings>
+                                        <MouseBinding Command="{Binding DataContext.EdgeClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}"
+                                                      MouseAction="LeftClick"/>
+                                    </Line.InputBindings>
+                                    <Line.Style>
+                                        <Style TargetType="Line">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsClickable}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Line.Style>
+                                </Line>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- 開拓地・都市の描画 -->
+                    <ItemsControl ItemsSource="{Binding Vertices}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding Center.X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Center.Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <!-- 開拓地（家の形） -->
+                                    <Path Fill="{Binding SettlementColor}"
+                                          Stroke="Black"
+                                          StrokeThickness="1.5"
+                                          Data="M 0,-8 L -6,0 L -6,6 L 6,6 L 6,0 Z">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding HasSettlement}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsCity}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+
+                                    <!-- 都市（城の形） -->
+                                    <Path Fill="{Binding SettlementColor}"
+                                          Stroke="Black"
+                                          StrokeThickness="1.5"
+                                          Data="M -8,-8 L -8,6 L 8,6 L 8,-8 L 6,-8 L 6,-6 L 4,-6 L 4,-8 L 0,-8 L 0,-6 L -2,-6 L -2,-8 Z">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding HasSettlement}" Value="True"/>
+                                                            <Condition Binding="{Binding IsCity}" Value="True"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                    </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding HasSettlement}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </MultiDataTrigger>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding IsCity}" Value="False"/>
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- クリック可能な頂点（開拓地配置用） -->
+                    <ItemsControl ItemsSource="{Binding Vertices}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Canvas.Left" Value="{Binding Center.X}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Center.Y}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="16" Height="16"
+                                         Fill="#8000FF00"
+                                         Stroke="#00FF00"
+                                         StrokeThickness="2"
+                                         Cursor="Hand"
+                                         RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.RenderTransform>
+                                        <TranslateTransform X="-8" Y="-8"/>
+                                    </Ellipse.RenderTransform>
+                                    <Ellipse.InputBindings>
+                                        <MouseBinding Command="{Binding DataContext.VertexClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}"
+                                                      MouseAction="LeftClick"/>
+                                    </Ellipse.InputBindings>
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsClickable}" Value="False">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Canvas>
             </ScrollViewer>
         </Border>
@@ -100,6 +275,15 @@
 
                 <Separator Margin="0,10"/>
 
+                <TextBlock Text="初期配置フェーズ:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <TextBlock Text="{Binding SetupPhaseMessage}"
+                           FontSize="13"
+                           Foreground="#0066CC"
+                           TextWrapping="Wrap"
+                           Margin="0,0,0,10"/>
+
+                <Separator Margin="0,10"/>
+
                 <Button Content="サイコロを振る"
                         Command="{Binding RollDiceCommand}"
                         Padding="10,5"
@@ -111,11 +295,10 @@
 
                 <Separator Margin="0,10"/>
 
-                <TextBlock Text="ゲーム操作" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
-                <TextBlock Text="フェーズ1: ボード表示" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                <TextBlock Text="• 資源タイルの六角形表示" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
-                <TextBlock Text="• 数字トークン" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
-                <TextBlock Text="• 基本的なターン管理" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="ゲーム進行" FontSize="14" FontWeight="Bold" Margin="0,10,0,10"/>
+                <TextBlock Text="フェーズ2: 初期配置" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                <TextBlock Text="• 各プレイヤー2つの開拓地と道路を配置" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
+                <TextBlock Text="• 2巡目の開拓地から初期資源を取得" TextWrapping="Wrap" Margin="10,0,0,5" FontSize="12"/>
             </StackPanel>
         </Border>
     </Grid>

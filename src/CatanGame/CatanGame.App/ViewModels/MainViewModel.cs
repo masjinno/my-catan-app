@@ -12,9 +12,13 @@ public class MainViewModel : ViewModelBase
 
     public ObservableCollection<HexTileViewModel> HexTiles { get; }
     public ObservableCollection<PortViewModel> Ports { get; }
+    public ObservableCollection<VertexViewModel> Vertices { get; }
+    public ObservableCollection<EdgeViewModel> Edges { get; }
 
     public ICommand NewGameCommand { get; }
     public ICommand RollDiceCommand { get; }
+    public ICommand VertexClickCommand { get; }
+    public ICommand EdgeClickCommand { get; }
 
     private string _currentPlayerName;
     public string CurrentPlayerName
@@ -30,15 +34,29 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _diceRoll, value);
     }
 
+    private string _setupPhaseMessage;
+    public string SetupPhaseMessage
+    {
+        get => _setupPhaseMessage;
+        set => SetProperty(ref _setupPhaseMessage, value);
+    }
+
+    private VertexPosition? _lastPlacedSettlement;
+
     public MainViewModel()
     {
         _gameState = new GameState();
         _currentPlayerName = "";
+        _setupPhaseMessage = "";
         HexTiles = new ObservableCollection<HexTileViewModel>();
         Ports = new ObservableCollection<PortViewModel>();
+        Vertices = new ObservableCollection<VertexViewModel>();
+        Edges = new ObservableCollection<EdgeViewModel>();
 
         NewGameCommand = new RelayCommand(_ => StartNewGame());
         RollDiceCommand = new RelayCommand(_ => RollDice(), _ => CanRollDice());
+        VertexClickCommand = new RelayCommand(param => OnVertexClick(param), _ => CanClickVertex());
+        EdgeClickCommand = new RelayCommand(param => OnEdgeClick(param), _ => CanClickEdge());
 
         StartNewGame();
     }
@@ -52,7 +70,8 @@ public class MainViewModel : ViewModelBase
         _gameState.Players.Add(new Player("プレイヤー3", PlayerColor.White));
         _gameState.Players.Add(new Player("プレイヤー4", PlayerColor.Orange));
 
-        _gameState.Phase = GamePhase.Playing;
+        _gameState.Phase = GamePhase.Setup;
+        _gameState.CurrentSetupPhase = SetupPhase.PlacingFirstSettlement;
 
         HexTiles.Clear();
         foreach (var tile in _gameState.Board.Tiles)
@@ -66,7 +85,54 @@ public class MainViewModel : ViewModelBase
             Ports.Add(new PortViewModel(port));
         }
 
+        InitializeVertices();
+        InitializeEdges();
+
         UpdateCurrentPlayer();
+        UpdateSetupPhaseMessage();
+        UpdateClickableVertices();
+    }
+
+    private void InitializeVertices()
+    {
+        Vertices.Clear();
+        var vertexPositions = new HashSet<(int Q, int R, int Dir)>();
+
+        // 各タイルの6つの頂点を生成
+        foreach (var tile in _gameState.Board.Tiles)
+        {
+            for (int dir = 0; dir < 6; dir++)
+            {
+                var key = (tile.Q, tile.R, dir);
+                if (!vertexPositions.Contains(key))
+                {
+                    vertexPositions.Add(key);
+                    var vertex = new VertexViewModel(new VertexPosition(tile.Q, tile.R, dir));
+                    Vertices.Add(vertex);
+                }
+            }
+        }
+    }
+
+    private void InitializeEdges()
+    {
+        Edges.Clear();
+        var edgePositions = new HashSet<(int Q, int R, int Dir)>();
+
+        // 各タイルの6つの辺を生成
+        foreach (var tile in _gameState.Board.Tiles)
+        {
+            for (int dir = 0; dir < 6; dir++)
+            {
+                var key = (tile.Q, tile.R, dir);
+                if (!edgePositions.Contains(key))
+                {
+                    edgePositions.Add(key);
+                    var edge = new EdgeViewModel(new EdgePosition(tile.Q, tile.R, dir));
+                    Edges.Add(edge);
+                }
+            }
+        }
     }
 
     private void RollDice()
@@ -92,5 +158,155 @@ public class MainViewModel : ViewModelBase
     private void UpdateCurrentPlayer()
     {
         CurrentPlayerName = _gameState.CurrentPlayer.Name;
+    }
+
+    private void UpdateSetupPhaseMessage()
+    {
+        if (_gameState.Phase != GamePhase.Setup)
+        {
+            SetupPhaseMessage = "";
+            return;
+        }
+
+        SetupPhaseMessage = _gameState.CurrentSetupPhase switch
+        {
+            SetupPhase.PlacingFirstSettlement => "開拓地を配置してください（1巡目）",
+            SetupPhase.PlacingFirstRoad => "道路を配置してください（1巡目）",
+            SetupPhase.PlacingSecondSettlement => "開拓地を配置してください（2巡目）",
+            SetupPhase.PlacingSecondRoad => "道路を配置してください（2巡目）",
+            _ => ""
+        };
+    }
+
+    private void UpdateClickableVertices()
+    {
+        foreach (var vertex in Vertices)
+        {
+            vertex.IsClickable = _gameState.Phase == GamePhase.Setup &&
+                                (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstSettlement ||
+                                 _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondSettlement) &&
+                                _gameState.Board.CanPlaceSettlement(vertex.Position, _gameState.CurrentPlayer, true);
+        }
+    }
+
+    private void UpdateClickableEdges()
+    {
+        foreach (var edge in Edges)
+        {
+            bool isClickable = false;
+
+            if (_gameState.Phase == GamePhase.Setup &&
+                (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstRoad ||
+                 _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad))
+            {
+                // 最後に配置した開拓地に隣接する辺のみクリック可能
+                if (_lastPlacedSettlement != null)
+                {
+                    var adjacentEdges = GetAdjacentEdgesToVertex(_lastPlacedSettlement);
+                    isClickable = adjacentEdges.Any(e => e.Equals(edge.Position)) &&
+                                  !_gameState.Board.Roads.ContainsKey(edge.Position);
+                }
+            }
+
+            edge.IsClickable = isClickable;
+        }
+    }
+
+    private List<EdgePosition> GetAdjacentEdgesToVertex(VertexPosition vertex)
+    {
+        var edges = new List<EdgePosition>();
+        int dir = vertex.Direction;
+
+        edges.Add(new EdgePosition(vertex.Q, vertex.R, dir));
+        edges.Add(new EdgePosition(vertex.Q, vertex.R, (dir + 5) % 6));
+
+        return edges;
+    }
+
+    private bool CanClickVertex()
+    {
+        return _gameState.Phase == GamePhase.Setup &&
+               (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstSettlement ||
+                _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondSettlement);
+    }
+
+    private bool CanClickEdge()
+    {
+        return _gameState.Phase == GamePhase.Setup &&
+               (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstRoad ||
+                _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad);
+    }
+
+    private void OnVertexClick(object? parameter)
+    {
+        if (parameter is not VertexViewModel vertexVM || !vertexVM.IsClickable)
+            return;
+
+        // 開拓地を配置
+        _gameState.Board.PlaceSettlement(vertexVM.Position, _gameState.CurrentPlayer);
+        vertexVM.HasSettlement = true;
+        vertexVM.SettlementOwner = _gameState.CurrentPlayer.Color;
+        vertexVM.IsClickable = false;
+
+        // 最後に配置した開拓地を記憶
+        _lastPlacedSettlement = vertexVM.Position;
+
+        // 初期配置フェーズの進行
+        _gameState.OnSettlementPlacedInSetup();
+
+        // 2巡目の場合、初期資源を配布
+        if (_gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad)
+        {
+            DistributeInitialResources(vertexVM.Position);
+        }
+
+        UpdateSetupPhaseMessage();
+        UpdateClickableVertices();
+        UpdateClickableEdges();
+        UpdateCurrentPlayer();
+    }
+
+    private void OnEdgeClick(object? parameter)
+    {
+        if (parameter is not EdgeViewModel edgeVM || !edgeVM.IsClickable)
+            return;
+
+        // 道路を配置
+        _gameState.Board.PlaceRoad(edgeVM.Position, _gameState.CurrentPlayer);
+        edgeVM.HasRoad = true;
+        edgeVM.RoadOwner = _gameState.CurrentPlayer.Color;
+        edgeVM.IsClickable = false;
+
+        // 最後に配置した開拓地をリセット
+        _lastPlacedSettlement = null;
+
+        // 初期配置フェーズの進行
+        _gameState.OnRoadPlacedInSetup();
+
+        UpdateSetupPhaseMessage();
+        UpdateClickableVertices();
+        UpdateClickableEdges();
+        UpdateCurrentPlayer();
+    }
+
+    private void DistributeInitialResources(VertexPosition settlementPosition)
+    {
+        // 開拓地に隣接するタイルから初期資源を取得
+        var adjacentTiles = _gameState.Board.Tiles
+            .Where(t => IsVertexAdjacentToTile(settlementPosition, t))
+            .ToList();
+
+        foreach (var tile in adjacentTiles)
+        {
+            if (tile.ResourceType != ResourceType.Desert)
+            {
+                _gameState.CurrentPlayer.AddResource(tile.ResourceType, 1);
+            }
+        }
+    }
+
+    private bool IsVertexAdjacentToTile(VertexPosition vertex, HexTile tile)
+    {
+        return vertex.Q == tile.Q && vertex.R == tile.R;
     }
 }

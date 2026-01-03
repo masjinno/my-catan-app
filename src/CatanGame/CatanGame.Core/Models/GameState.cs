@@ -7,13 +7,24 @@ public enum GamePhase
     Ended
 }
 
+public enum SetupPhase
+{
+    PlacingFirstSettlement,
+    PlacingFirstRoad,
+    PlacingSecondSettlement,
+    PlacingSecondRoad,
+    Completed
+}
+
 public class GameState
 {
     public Board Board { get; set; }
     public List<Player> Players { get; set; }
     public int CurrentPlayerIndex { get; set; }
     public GamePhase Phase { get; set; }
+    public SetupPhase CurrentSetupPhase { get; set; }
     public int DiceRoll { get; set; }
+    public int SetupRound { get; set; } // 0=1巡目, 1=2巡目
 
     public GameState()
     {
@@ -21,7 +32,9 @@ public class GameState
         Players = new List<Player>();
         CurrentPlayerIndex = 0;
         Phase = GamePhase.Setup;
+        CurrentSetupPhase = SetupPhase.PlacingFirstSettlement;
         DiceRoll = 0;
+        SetupRound = 0;
     }
 
     public Player CurrentPlayer => Players[CurrentPlayerIndex];
@@ -64,5 +77,57 @@ public class GameState
     public Player? CheckWinner()
     {
         return Players.FirstOrDefault(p => p.VictoryPoints >= 10);
+    }
+
+    /// <summary>
+    /// 初期配置フェーズで開拓地を配置した後の処理
+    /// </summary>
+    public void OnSettlementPlacedInSetup()
+    {
+        if (CurrentSetupPhase == SetupPhase.PlacingFirstSettlement)
+        {
+            CurrentSetupPhase = SetupPhase.PlacingFirstRoad;
+        }
+        else if (CurrentSetupPhase == SetupPhase.PlacingSecondSettlement)
+        {
+            CurrentSetupPhase = SetupPhase.PlacingSecondRoad;
+        }
+    }
+
+    /// <summary>
+    /// 初期配置フェーズで道路を配置した後の処理
+    /// </summary>
+    public void OnRoadPlacedInSetup()
+    {
+        if (CurrentSetupPhase == SetupPhase.PlacingFirstRoad)
+        {
+            // 1巡目：次のプレイヤーへ
+            if (CurrentPlayerIndex < Players.Count - 1)
+            {
+                CurrentPlayerIndex++;
+            }
+            else
+            {
+                // 全プレイヤーが1巡目を終えたら2巡目へ（順番は逆）
+                SetupRound = 1;
+                CurrentSetupPhase = SetupPhase.PlacingSecondSettlement;
+            }
+        }
+        else if (CurrentSetupPhase == SetupPhase.PlacingSecondRoad)
+        {
+            // 2巡目：前のプレイヤーへ
+            if (CurrentPlayerIndex > 0)
+            {
+                CurrentPlayerIndex--;
+                CurrentSetupPhase = SetupPhase.PlacingSecondSettlement;
+            }
+            else
+            {
+                // 全プレイヤーが2巡目を終えたらセットアップ完了
+                CurrentSetupPhase = SetupPhase.Completed;
+                Phase = GamePhase.Playing;
+                CurrentPlayerIndex = 0;
+            }
+        }
     }
 }
