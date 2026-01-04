@@ -98,16 +98,19 @@ public class MainViewModel : ViewModelBase
         Vertices.Clear();
         var vertexPositions = new HashSet<(int Q, int R, int Dir)>();
 
-        // 各タイルの6つの頂点を生成
+        // 各タイルの6つの頂点を生成（正規化された座標のみ）
         foreach (var tile in _gameState.Board.Tiles)
         {
             for (int dir = 0; dir < 6; dir++)
             {
-                var key = (tile.Q, tile.R, dir);
+                var position = new VertexPosition(tile.Q, tile.R, dir);
+                var normalized = position.GetNormalized();
+                var key = (normalized.Q, normalized.R, normalized.Direction);
+
                 if (!vertexPositions.Contains(key))
                 {
                     vertexPositions.Add(key);
-                    var vertex = new VertexViewModel(new VertexPosition(tile.Q, tile.R, dir));
+                    var vertex = new VertexViewModel(normalized);
                     Vertices.Add(vertex);
                 }
             }
@@ -119,16 +122,19 @@ public class MainViewModel : ViewModelBase
         Edges.Clear();
         var edgePositions = new HashSet<(int Q, int R, int Dir)>();
 
-        // 各タイルの6つの辺を生成
+        // 各タイルの6つの辺を生成（正規化された座標のみ）
         foreach (var tile in _gameState.Board.Tiles)
         {
             for (int dir = 0; dir < 6; dir++)
             {
-                var key = (tile.Q, tile.R, dir);
+                var position = new EdgePosition(tile.Q, tile.R, dir);
+                var normalized = position.GetNormalized();
+                var key = (normalized.Q, normalized.R, normalized.Direction);
+
                 if (!edgePositions.Contains(key))
                 {
                     edgePositions.Add(key);
-                    var edge = new EdgeViewModel(new EdgePosition(tile.Q, tile.R, dir));
+                    var edge = new EdgeViewModel(normalized);
                     Edges.Add(edge);
                 }
             }
@@ -191,21 +197,24 @@ public class MainViewModel : ViewModelBase
 
     private void UpdateClickableEdges()
     {
+        // 最後に配置した開拓地に隣接する辺のリストを事前に取得
+        List<EdgePosition>? adjacentEdges = null;
+        if (_gameState.Phase == GamePhase.Setup &&
+            (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstRoad ||
+             _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad) &&
+            _lastPlacedSettlement != null)
+        {
+            adjacentEdges = GetAdjacentEdgesToVertex(_lastPlacedSettlement);
+        }
+
         foreach (var edge in Edges)
         {
             bool isClickable = false;
 
-            if (_gameState.Phase == GamePhase.Setup &&
-                (_gameState.CurrentSetupPhase == SetupPhase.PlacingFirstRoad ||
-                 _gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad))
+            if (adjacentEdges != null)
             {
-                // 最後に配置した開拓地に隣接する辺のみクリック可能
-                if (_lastPlacedSettlement != null)
-                {
-                    var adjacentEdges = GetAdjacentEdgesToVertex(_lastPlacedSettlement);
-                    isClickable = adjacentEdges.Any(e => e.Equals(edge.Position)) &&
-                                  !_gameState.Board.Roads.ContainsKey(edge.Position);
-                }
+                isClickable = adjacentEdges.Any(e => e.Equals(edge.Position)) &&
+                              !_gameState.Board.Roads.ContainsKey(edge.Position);
             }
 
             edge.IsClickable = isClickable;
@@ -217,10 +226,37 @@ public class MainViewModel : ViewModelBase
         var edges = new List<EdgePosition>();
         int dir = vertex.Direction;
 
-        edges.Add(new EdgePosition(vertex.Q, vertex.R, dir));
-        edges.Add(new EdgePosition(vertex.Q, vertex.R, (dir + 5) % 6));
+        // 頂点に隣接する3つの辺を取得
+        // 頂点Directionは、タイル中心から見た頂点の角度を示す（0=右、時計回り）
+        // 辺Directionは、タイルの6つの辺を示す（0=右下、1=下、2=左下、3=左上、4=上、5=右上）
+
+        // 1. 現在のタイルの辺（頂点から時計回りの辺）
+        edges.Add(new EdgePosition(vertex.Q, vertex.R, dir).GetNormalized());
+
+        // 2. 現在のタイルの辺（頂点から反時計回りの辺）
+        edges.Add(new EdgePosition(vertex.Q, vertex.R, (dir + 5) % 6).GetNormalized());
+
+        // 3. 隣接タイルの辺
+        var (neighborQ, neighborR, neighborDir) = GetNeighborTileForVertex(vertex.Q, vertex.R, dir);
+        edges.Add(new EdgePosition(neighborQ, neighborR, neighborDir).GetNormalized());
 
         return edges;
+    }
+
+    private (int Q, int R, int direction) GetNeighborTileForVertex(int q, int r, int dir)
+    {
+        // 六角形の頂点に隣接する第3のタイルの座標を計算
+        // 頂点Directionに応じて、どの方向のタイルかを決定
+        return dir switch
+        {
+            0 => (q + 1, r    , (dir + 4) % 6),  // 右のタイル
+            1 => (q    , r + 1, (dir + 4) % 6),  // 右下のタイル
+            2 => (q - 1, r + 1, (dir + 4) % 6),  // 下のタイル
+            3 => (q - 1, r    , (dir + 4) % 6),  // 左のタイル
+            4 => (q    , r - 1, (dir + 4) % 6),  // 左上のタイル
+            5 => (q + 1, r - 1, (dir + 4) % 6),  // 上のタイル
+            _ => (q    , r    , (dir + 4) % 6)
+        };
     }
 
     private bool CanClickVertex()
