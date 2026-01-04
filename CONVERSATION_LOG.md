@@ -1881,3 +1881,191 @@ git管理から外して
 この「コミットして。」の対話も対話ログに更新してからコミットして。
 
 ### Claude Code
+わかりました。対話ログを更新してコミットします。今後はコミット時に対話ログも同時に更新します。
+
+*(対話ログ更新とコミット実行: 09172ed)*
+
+コミット完了しました!
+
+**コミット内容:**
+- コミットID: `09172ed`
+- 対話ログを更新（道路配置の3箇所目の修正とgit管理の整理に関する対話を記録）
+
+次は、問題2（プレイヤー2に移行しない問題）を修正しましょうか？
+
+---
+
+### ユーザー
+修正お願い
+
+### Claude Code
+わかりました。問題2（プレイヤー2に移行しない問題）を修正します。
+
+*(MainViewModel.cs修正実行)*
+
+修正完了しました！
+
+**修正内容:**
+- `OnVertexClick()` メソッドから不要な `UpdateCurrentPlayer()` の呼び出しを削除しました（302行目を削除）
+
+**理由:**
+- プレイヤーの切り替えは、道路を配置した後の `OnRoadPlacedInSetup()` で行われます
+- 開拓地配置後に `UpdateCurrentPlayer()` を呼ぶと、まだプレイヤーが切り替わっていないのに表示が更新されてしまい、次のプレイヤーに正しく移行できなくなります
+
+ビルドして動作を確認してください。プレイヤー1が開拓地と道路を配置した後、正しくプレイヤー2に移行するはずです。
+
+---
+
+### ユーザー
+プレイヤー1の家と道を置いた後に、「現在のプレイヤー:」がプレイヤー2に移る。（期待通り）
+だが、家配置が始まらない。
+具体的には以下。
+・「初期配置フェーズ:」が "道路を配置してください（1巡目）"のまま変わらない
+・盤面UI上、頂点がハイライトされない
+
+### Claude Code
+原因がわかりました。`OnRoadPlacedInSetup()` の処理に問題があります。
+
+**原因:**
+`OnRoadPlacedInSetup()` の1巡目の処理（102-114行）で、次のプレイヤーに移行する際に `CurrentSetupPhase` を `PlacingFirstSettlement` に戻していません。プレイヤーインデックスは増えていますが、フェーズが `PlacingFirstRoad` のままなので、次のプレイヤーは開拓地を配置できません。
+
+**修正方針:**
+1巡目で次のプレイヤーに移行するときに、`CurrentSetupPhase` を `PlacingFirstSettlement` に戻す必要があります。
+
+*(GameState.cs修正実行)*
+
+修正完了しました！
+
+**修正内容:**
+- `OnRoadPlacedInSetup()` の1巡目処理で、次のプレイヤーに移行する際に `CurrentSetupPhase = SetupPhase.PlacingFirstSettlement;` を追加しました（108行目）
+
+**理由:**
+- 道路配置後に次のプレイヤーに移行するとき、フェーズを「開拓地配置」に戻さないと、次のプレイヤーは開拓地を配置できません
+- これで、プレイヤー1が道路を配置した後、プレイヤー2が開拓地配置フェーズから始められるようになります
+
+ビルドして動作を確認してください。プレイヤー1が開拓地と道路を配置した後、プレイヤー2が正しく開拓地配置フェーズに移行するはずです。
+
+---
+
+### ユーザー
+さっきの問題は解消された。
+そして新しい問題が見つかった。
+
+ルール上、家の隣の頂点には家は建てられない。
+しかし、既に家が建っている頂点の隣の頂点がハイライトされることがある。
+
+### Claude Code
+わかりました。開拓地配置時の隣接チェックに問題があります。
+
+問題を発見しました！
+
+**原因:**
+`GetAdjacentVertices()` メソッド（168-177行）が、隣接する頂点を2つしか返していません。しかし、六角形の頂点には実際には**3つの隣接頂点**があります。道路の場合と同じように、第3のタイルも考慮する必要があります。
+
+現在のコードは同じタイルの2つの頂点しか見ていないため、別のタイルの頂点に開拓地があっても検出できず、距離ルールが正しく適用されません。
+
+**修正方針:**
+`GetAdjacentVertices()` で3つ目の隣接頂点を追加し、正規化して比較する必要があります。
+
+*(Board.cs修正実行)*
+
+修正完了しました！
+
+**修正内容:**
+
+1. **`GetAdjacentVertices()` メソッドを修正**（168-185行）
+   - 3つ目の隣接頂点を追加（第3のタイルの頂点）
+   - 全ての頂点を `.GetNormalized()` で正規化して返すように変更
+
+2. **`GetNeighborTileForVertex()` メソッドを追加**（187-201行）
+   - 頂点に隣接する第3のタイルの座標を計算
+   - MainViewModelと同じロジック
+
+**これにより:**
+- 開拓地配置時に、隣接する3つの頂点すべてをチェックするようになります
+- 既に開拓地がある頂点の隣接頂点がハイライトされなくなります
+- 距離ルール（開拓地は隣接できない）が正しく適用されます
+
+ビルドして動作を確認してください。既に開拓地がある頂点の隣の頂点は、正しくクリック不可になるはずです。
+
+---
+
+### ユーザー
+今のロジック上、家を配置できない頂点はどうやって選ばれている？
+言葉ではなく、内部データで説明して。
+
+### Claude Code
+**開拓地を配置できない頂点の判定ロジック（内部データ）:**
+
+## `CanPlaceSettlement(position, player, isInitialPlacement=true)` の処理:
+
+### 1. 既に開拓地がある頂点
+```
+if (Settlements.ContainsKey(position))
+    return false;
+```
+- `Settlements`: `Dictionary<VertexPosition, Settlement>`
+- `position` が `Settlements` のキーに存在する場合 → **配置不可**
+
+### 2. 隣接頂点チェック（124-125行）
+```
+var adjacentVertices = GetAdjacentVertices(position);
+return !adjacentVertices.Any(v => Settlements.ContainsKey(v));
+```
+
+**`GetAdjacentVertices(position)` の戻り値:**
+- `List<VertexPosition>` サイズ3（正規化済み）
+- 例: `position = (Q:0, R:0, Dir:0)` の場合
+  - `(0, 0, 1).GetNormalized()` → 時計回りの隣接頂点
+  - `(0, 0, 5).GetNormalized()` → 反時計回りの隣接頂点
+  - `GetNeighborTileForVertex(0, 0, 0)` → `(1, 0, 4)` → `(1, 0, 4).GetNormalized()` → 隣接タイルの頂点
+
+**配置不可の条件:**
+```
+adjacentVertices.Any(v => Settlements.ContainsKey(v)) == true
+```
+つまり、3つの隣接頂点のうち**1つでも** `Settlements` に存在する場合 → **配置不可**
+
+## 問題の可能性:
+
+`Settlements` の**キーが正規化されていない**可能性があります。
+
+**問題を発見しました！**
+
+## 問題の根本原因:
+
+**`PlaceSettlement()` メソッド（144-149行）:**
+```csharp
+Settlements[position] = new Settlement(position, player);
+```
+
+- `position` を**そのまま**（正規化せずに）`Settlements` のキーとして使用
+
+**一方、`GetAdjacentVertices()` は:**
+```csharp
+adjacent.Add(new VertexPosition(...).GetNormalized());
+```
+- 全ての頂点を**正規化して**返す
+
+## 結果:
+
+1. **開拓地配置時**: `Settlements` に `position`（非正規化）がキーとして追加される
+   - 例: `Settlements[(0, 0, 0)] = settlement1`
+
+2. **隣接チェック時**: `GetAdjacentVertices()` が返す頂点は全て正規化済み
+   - 例: `adjacentVertices = [(0, 0, 1).GetNormalized(), (0, 0, 5).GetNormalized(), (1, 0, 4).GetNormalized()]`
+
+3. **比較時**: `Settlements.ContainsKey(v)` で正規化された `v` を検索
+   - しかし、`Settlements` のキーは非正規化
+   - 物理的に同じ頂点でも、異なる `(Q, R, Direction)` 表現のため**一致しない**
+
+## 解決策:
+
+`PlaceSettlement()` で `position` を正規化してから `Settlements` に追加する必要があります。
+
+---
+
+### ユーザー
+ばっちり。コミットして。
+
+### Claude Code

@@ -299,7 +299,6 @@ public class MainViewModel : ViewModelBase
         UpdateSetupPhaseMessage();
         UpdateClickableVertices();
         UpdateClickableEdges();
-        UpdateCurrentPlayer();
     }
 
     private void OnEdgeClick(object? parameter)

@@ -105,6 +105,7 @@ public class GameState
             if (CurrentPlayerIndex < Players.Count - 1)
             {
                 CurrentPlayerIndex++;
+                CurrentSetupPhase = SetupPhase.PlacingFirstSettlement;
             }
             else
             {

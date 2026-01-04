@@ -143,14 +143,16 @@ public class Board
 
     public void PlaceSettlement(VertexPosition position, Player player)
     {
-        Settlements[position] = new Settlement(position, player);
+        var normalizedPosition = position.GetNormalized();
+        Settlements[normalizedPosition] = new Settlement(normalizedPosition, player);
         player.SettlementCount--;
         player.VictoryPoints++;
     }
 
     public void PlaceRoad(EdgePosition position, Player player)
     {
-        Roads[position] = new Road(position, player);
+        var normalizedPosition = position.GetNormalized();
+        Roads[normalizedPosition] = new Road(normalizedPosition, player);
         player.RoadCount--;
     }
 
@@ -170,10 +172,34 @@ public class Board
         var adjacent = new List<VertexPosition>();
         int dir = position.Direction;
 
-        adjacent.Add(new VertexPosition(position.Q, position.R, (dir + 1) % 6));
-        adjacent.Add(new VertexPosition(position.Q, position.R, (dir + 5) % 6));
+        // 頂点に隣接する3つの頂点を取得
+        // 1. 現在のタイルの隣接頂点（時計回り）
+        adjacent.Add(new VertexPosition(position.Q, position.R, (dir + 1) % 6).GetNormalized());
+
+        // 2. 現在のタイルの隣接頂点（反時計回り）
+        adjacent.Add(new VertexPosition(position.Q, position.R, (dir + 5) % 6).GetNormalized());
+
+        // 3. 隣接タイルの頂点
+        var (neighborQ, neighborR, neighborDir) = GetNeighborTileForVertex(position.Q, position.R, dir);
+        adjacent.Add(new VertexPosition(neighborQ, neighborR, neighborDir).GetNormalized());
 
         return adjacent;
+    }
+
+    private (int Q, int R, int direction) GetNeighborTileForVertex(int q, int r, int dir)
+    {
+        // 六角形の頂点に隣接する第3のタイルの座標を計算
+        // 頂点Directionに応じて、どの方向のタイルかを決定
+        return dir switch
+        {
+            0 => (q + 1, r    , (dir + 5) % 6),  // 右のタイル
+            1 => (q    , r + 1, (dir + 5) % 6),  // 右下のタイル
+            2 => (q - 1, r + 1, (dir + 5) % 6),  // 下のタイル
+            3 => (q - 1, r    , (dir + 5) % 6),  // 左のタイル
+            4 => (q    , r - 1, (dir + 5) % 6),  // 左上のタイル
+            5 => (q + 1, r - 1, (dir + 5) % 6),  // 上のタイル
+            _ => (q    , r    , (dir + 5) % 6)
+        };
     }
 
     private List<EdgePosition> GetAdjacentEdges(VertexPosition position)
