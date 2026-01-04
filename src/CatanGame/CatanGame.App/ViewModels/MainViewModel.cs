@@ -27,6 +27,13 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _currentPlayerName, value);
     }
 
+    private string _currentPlayerColorBrush;
+    public string CurrentPlayerColorBrush
+    {
+        get => _currentPlayerColorBrush;
+        set => SetProperty(ref _currentPlayerColorBrush, value);
+    }
+
     private int _diceRoll;
     public int DiceRoll
     {
@@ -47,6 +54,7 @@ public class MainViewModel : ViewModelBase
     {
         _gameState = new GameState();
         _currentPlayerName = "";
+        _currentPlayerColorBrush = "";
         _setupPhaseMessage = "";
         HexTiles = new ObservableCollection<HexTileViewModel>();
         Ports = new ObservableCollection<PortViewModel>();
@@ -164,6 +172,14 @@ public class MainViewModel : ViewModelBase
     private void UpdateCurrentPlayer()
     {
         CurrentPlayerName = _gameState.CurrentPlayer.Name;
+        CurrentPlayerColorBrush = _gameState.CurrentPlayer.Color switch
+        {
+            PlayerColor.Red => "#D32F2F",
+            PlayerColor.Blue => "#1976D2",
+            PlayerColor.Orange => "#F57C00",
+            PlayerColor.White => "#FFFFFF",
+            _ => "#000000"
+        };
     }
 
     private void UpdateSetupPhaseMessage()
