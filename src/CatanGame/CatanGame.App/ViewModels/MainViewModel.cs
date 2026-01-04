@@ -14,6 +14,7 @@ public class MainViewModel : ViewModelBase
     public ObservableCollection<PortViewModel> Ports { get; }
     public ObservableCollection<VertexViewModel> Vertices { get; }
     public ObservableCollection<EdgeViewModel> Edges { get; }
+    public ObservableCollection<PlayerResourceViewModel> PlayersResources { get; }
 
     public ICommand NewGameCommand { get; }
     public ICommand RollDiceCommand { get; }
@@ -48,6 +49,13 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _setupPhaseMessage, value);
     }
 
+    private string _currentPlayerResources;
+    public string CurrentPlayerResources
+    {
+        get => _currentPlayerResources;
+        set => SetProperty(ref _currentPlayerResources, value);
+    }
+
     private VertexPosition? _lastPlacedSettlement;
 
     public MainViewModel()
@@ -56,10 +64,12 @@ public class MainViewModel : ViewModelBase
         _currentPlayerName = "";
         _currentPlayerColorBrush = "";
         _setupPhaseMessage = "";
+        _currentPlayerResources = "";
         HexTiles = new ObservableCollection<HexTileViewModel>();
         Ports = new ObservableCollection<PortViewModel>();
         Vertices = new ObservableCollection<VertexViewModel>();
         Edges = new ObservableCollection<EdgeViewModel>();
+        PlayersResources = new ObservableCollection<PlayerResourceViewModel>();
 
         NewGameCommand = new RelayCommand(_ => StartNewGame());
         RollDiceCommand = new RelayCommand(_ => RollDice(), _ => CanRollDice());
@@ -96,9 +106,43 @@ public class MainViewModel : ViewModelBase
         InitializeVertices();
         InitializeEdges();
 
+        InitializePlayersResources();
+
         UpdateCurrentPlayer();
         UpdateSetupPhaseMessage();
         UpdateClickableVertices();
+    }
+
+    private void InitializePlayersResources()
+    {
+        PlayersResources.Clear();
+        foreach (var player in _gameState.Players)
+        {
+            var playerResourceVM = new PlayerResourceViewModel
+            {
+                PlayerName = player.Name,
+                ColorBrush = player.Color switch
+                {
+                    PlayerColor.Red => "#D32F2F",
+                    PlayerColor.Blue => "#1976D2",
+                    PlayerColor.Orange => "#F57C00",
+                    PlayerColor.White => "#FFFFFF",
+                    _ => "#000000"
+                }
+            };
+            UpdatePlayerResourcesText(playerResourceVM, player);
+            PlayersResources.Add(playerResourceVM);
+        }
+    }
+
+    private void UpdatePlayerResourcesText(PlayerResourceViewModel vm, Player player)
+    {
+        var resources = player.Resources;
+        vm.Resources = $"木: {resources[ResourceType.Wood]}  " +
+                      $"土: {resources[ResourceType.Brick]}  " +
+                      $"羊: {resources[ResourceType.Sheep]}  " +
+                      $"麦: {resources[ResourceType.Wheat]}  " +
+                      $"鉄: {resources[ResourceType.Ore]}";
     }
 
     private void InitializeVertices()
@@ -155,6 +199,7 @@ public class MainViewModel : ViewModelBase
         DiceRoll = _gameState.DiceRoll;
 
         _gameState.DistributeResources(DiceRoll);
+        UpdateCurrentPlayerResources();
 
         var winner = _gameState.CheckWinner();
         if (winner != null)
@@ -180,6 +225,27 @@ public class MainViewModel : ViewModelBase
             PlayerColor.White => "#FFFFFF",
             _ => "#000000"
         };
+        UpdateCurrentPlayerResources();
+    }
+
+    private void UpdateCurrentPlayerResources()
+    {
+        // 全プレイヤーの手札情報を更新
+        for (int i = 0; i < _gameState.Players.Count; i++)
+        {
+            var player = _gameState.Players[i];
+            var vm = PlayersResources[i];
+            UpdatePlayerResourcesText(vm, player);
+        }
+
+        // 現在のプレイヤーの手札情報も更新（互換性のため残す）
+        var currentPlayer = _gameState.CurrentPlayer;
+        var resources = currentPlayer.Resources;
+        CurrentPlayerResources = $"木: {resources[ResourceType.Wood]}  " +
+                                 $"土: {resources[ResourceType.Brick]}  " +
+                                 $"羊: {resources[ResourceType.Sheep]}  " +
+                                 $"麦: {resources[ResourceType.Wheat]}  " +
+                                 $"鉄: {resources[ResourceType.Ore]}";
     }
 
     private void UpdateSetupPhaseMessage()
@@ -303,14 +369,15 @@ public class MainViewModel : ViewModelBase
         // 最後に配置した開拓地を記憶
         _lastPlacedSettlement = vertexVM.Position;
 
-        // 初期配置フェーズの進行
-        _gameState.OnSettlementPlacedInSetup();
-
-        // 2巡目の場合、初期資源を配布
-        if (_gameState.CurrentSetupPhase == SetupPhase.PlacingSecondRoad)
+        // 2巡目の場合、初期資源を配布（フェーズ進行の前にチェック）
+        if (_gameState.CurrentSetupPhase == SetupPhase.PlacingSecondSettlement)
         {
             DistributeInitialResources(vertexVM.Position);
+            UpdateCurrentPlayerResources();
         }
+
+        // 初期配置フェーズの進行
+        _gameState.OnSettlementPlacedInSetup();
 
         UpdateSetupPhaseMessage();
         UpdateClickableVertices();
@@ -358,6 +425,45 @@ public class MainViewModel : ViewModelBase
 
     private bool IsVertexAdjacentToTile(VertexPosition vertex, HexTile tile)
     {
-        return vertex.Q == tile.Q && vertex.R == tile.R;
+        // 頂点は3つのタイルに隣接している
+        // 正規化された頂点座標から、隣接する3つのタイルの座標を取得
+        var normalizedVertex = vertex.GetNormalized();
+
+        // 1つ目: 頂点座標のタイル
+        if (normalizedVertex.Q == tile.Q && normalizedVertex.R == tile.R)
+            return true;
+
+        // 2つ目と3つ目: VertexPosition.GetNormalized() のロジックから隣接タイルを計算
+        var adjacentTiles = new List<(int Q, int R)>();
+
+        switch (normalizedVertex.Direction)
+        {
+            case 0: // 右の頂点
+                adjacentTiles.Add((normalizedVertex.Q + 1, normalizedVertex.R - 1)); // 右上のタイル
+                adjacentTiles.Add((normalizedVertex.Q + 1, normalizedVertex.R));     // 右下のタイル
+                break;
+            case 1: // 右下の頂点
+                adjacentTiles.Add((normalizedVertex.Q + 1, normalizedVertex.R));     // 右下のタイル
+                adjacentTiles.Add((normalizedVertex.Q, normalizedVertex.R + 1));     // 下のタイル
+                break;
+            case 2: // 左下の頂点
+                adjacentTiles.Add((normalizedVertex.Q, normalizedVertex.R + 1));     // 下のタイル
+                adjacentTiles.Add((normalizedVertex.Q - 1, normalizedVertex.R + 1)); // 左下のタイル
+                break;
+            case 3: // 左の頂点
+                adjacentTiles.Add((normalizedVertex.Q - 1, normalizedVertex.R + 1)); // 左下のタイル
+                adjacentTiles.Add((normalizedVertex.Q - 1, normalizedVertex.R));     // 左上のタイル
+                break;
+            case 4: // 左上の頂点
+                adjacentTiles.Add((normalizedVertex.Q - 1, normalizedVertex.R));     // 左上のタイル
+                adjacentTiles.Add((normalizedVertex.Q, normalizedVertex.R - 1));     // 上のタイル
+                break;
+            case 5: // 上の頂点
+                adjacentTiles.Add((normalizedVertex.Q, normalizedVertex.R - 1));     // 左上のタイル
+                adjacentTiles.Add((normalizedVertex.Q + 1, normalizedVertex.R - 1)); // 右上のタイル
+                break;
+        }
+
+        return adjacentTiles.Any(t => t.Q == tile.Q && t.R == tile.R);
     }
 }

@@ -283,6 +283,31 @@
 
                 <Separator Margin="0,10"/>
 
+                <TextBlock Text="全プレイヤーの手札:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
+                <ItemsControl ItemsSource="{Binding PlayersResources}" Margin="0,0,0,10">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                    <TextBlock Text="{Binding PlayerName}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    <Border Width="14" Height="14"
+                                            Background="{Binding ColorBrush}"
+                                            BorderBrush="Black"
+                                            BorderThickness="1"
+                                            Margin="6,0,0,0"
+                                            VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <TextBlock Text="{Binding Resources}"
+                                           FontSize="11"
+                                           Foreground="#333333"
+                                           Margin="0,0,0,0"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Separator Margin="0,10"/>
+
                 <TextBlock Text="初期配置フェーズ:" FontSize="14" FontWeight="Bold" Margin="0,10,0,5"/>
                 <TextBlock Text="{Binding SetupPhaseMessage}"
                            FontSize="13"
